@@ -1,0 +1,4 @@
+{
+  "note": "Measured in the running dev app (Vite dev server, Browser pane) as a test account (2 courses, 2 availability slots, 4 sessions generated), from the Regenerate click until the \"Timetable generated\" toast was rendered, which happens after saveTimetable (read existing ids, insert, delete) and the refetch of entries and courses. Network: Supabase eu-central-1 from this machine. Five consecutive runs, each replacing the previous timetable. Wall-clock performance.now() measured in the page; not a production build.",
+  "runs": [994, 988, 933, 862, 973]
+}
