@@ -116,6 +116,9 @@ export default function Courses() {
               </option>
             ))}
           </Select>
+          {editingId && (
+            <p className="text-[13px] text-sf-text-secondary">Regenerate your timetable to apply changes.</p>
+          )}
           <Button type="submit" fullWidth className="mt-1" disabled={submitting}>
             {submitting ? 'Saving…' : editingId ? 'Save changes' : 'Save course'}
           </Button>
