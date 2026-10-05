@@ -55,29 +55,47 @@ export function generateTimetable({ courses, availabilitySlots, sessionDurationM
   // 4. sort by session count, descending (stable, so ties keep input order)
   planned.sort((a, b) => b.sessionCount - a.sessionCount)
 
-  // 5. walk the slots, assigning sessions round-robin. A session is only placed if it
-  //    fits fully in what is left of the slot, so there are no partial sessions.
+  // 5. spread sessions across the available days, round-robin. Each day offers the start times
+  //    of the whole sessions that fit in its slots; one session is placed per day per round,
+  //    so a long slot on one day no longer swallows the whole week. Courses are handed out
+  //    round-robin from the sorted list. A session is only placed if it fits fully in a slot.
+  const startsByDay = new Map()
+  for (const slot of slots) {
+    const starts = startsByDay.get(slot.dayOfWeek) ?? []
+    for (let cursor = slot.start; cursor + sessionDurationMinutes <= slot.end; cursor += sessionDurationMinutes) {
+      starts.push(cursor)
+    }
+    startsByDay.set(slot.dayOfWeek, starts)
+  }
+  const days = DAY_ORDER.filter((day) => startsByDay.get(day)?.length > 0)
+
   const entries = []
   let pointer = 0
   const hasRemaining = () => planned.some((p) => p.sessionCount > 0)
 
-  for (const slot of slots) {
-    let cursor = slot.start
-    while (cursor + sessionDurationMinutes <= slot.end && hasRemaining()) {
+  while (hasRemaining() && days.some((day) => startsByDay.get(day).length > 0)) {
+    for (const day of days) {
+      const starts = startsByDay.get(day)
+      if (starts.length === 0) continue
+      if (!hasRemaining()) break
       while (planned[pointer % planned.length].sessionCount === 0) pointer++
       const course = planned[pointer % planned.length]
       pointer++
 
+      const start = starts.shift()
       entries.push({
         courseId: course.courseId,
-        dayOfWeek: slot.dayOfWeek,
-        startTime: toTime(cursor),
-        endTime: toTime(cursor + sessionDurationMinutes),
+        dayOfWeek: day,
+        startTime: toTime(start),
+        endTime: toTime(start + sessionDurationMinutes),
       })
       course.sessionCount--
-      cursor += sessionDurationMinutes
     }
   }
+
+  entries.sort(
+    (a, b) => DAY_ORDER.indexOf(a.dayOfWeek) - DAY_ORDER.indexOf(b.dayOfWeek) || a.startTime.localeCompare(b.startTime),
+  )
 
   // 6. flat list of entries
   return entries

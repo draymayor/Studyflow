@@ -44,7 +44,7 @@ For full pseudocode see the project report, Section 3.6.6.
 2. Compute each course's weight = `credit_hours / total_credit_hours`.
 3. Compute each course's weekly study hours = `weight × total_available_hours`.
 4. Compute session count per course = `round(study_hours / session_duration)`.
-5. Distribute sessions round-robin across available slots, ordered by descending session count.
+5. Distribute sessions round-robin across the available days (one per day per round), taking courses in descending session-count order.
 6. Save generated entries to `timetable_entries`; schedule notifications for each.
 
 Default session duration: **1.5 hours** (configurable by the student).

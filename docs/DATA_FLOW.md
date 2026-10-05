@@ -78,7 +78,7 @@ sessionDurationMinutes: number
 2. `totalAvailableMinutes = sum((slot.endTime - slot.startTime) for slot in availabilitySlots)`
 3. For each course: `weight = creditHours / totalCredits`; `studyMinutes = weight * totalAvailableMinutes`; `sessionCount = round(studyMinutes / sessionDurationMinutes)`
 4. Sort courses by `sessionCount` descending
-5. Walk through each availability slot, round-robin assigning sessions from the sorted course list until the slot is filled
+5. Spread sessions across the available days, round-robin: each round places one session on each day that still has room (earliest free start first), taking courses round-robin from the sorted list, until every course's session count is placed or no whole session fits
 6. Return the flat list of entries
 
 **This function must be unit-testable in isolation** (no Supabase import inside it), see `TESTING.md`.
