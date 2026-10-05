@@ -94,6 +94,29 @@ export function useCourses() {
   }
 
   async function deleteCourse(courseId) {
+    // Remove the course's PDF first, using the stored path (never rebuilt). If that fails the
+    // course row is kept, so a file is never left behind without its course.
+    try {
+      const { data: course, error: readError } = await supabase
+        .from('courses')
+        .select('material_url')
+        .eq('id', courseId)
+        .maybeSingle()
+      if (readError) throw readError
+      if (course?.material_url) {
+        const { error: removeError } = await supabase.storage.from('materials').remove([course.material_url])
+        if (removeError) {
+          console.error('Removing course PDF failed', removeError)
+          setError('This course was not deleted because its PDF could not be removed from storage. Please try again.')
+          return false
+        }
+      }
+    } catch (err) {
+      console.error('Checking course PDF failed', err)
+      setError('This course was not deleted because we could not check its PDF. Please try again.')
+      return false
+    }
+
     try {
       const { error: deleteError } = await supabase.from('courses').delete().eq('id', courseId)
       if (deleteError) throw deleteError
