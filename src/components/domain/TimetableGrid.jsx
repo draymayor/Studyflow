@@ -1,3 +1,4 @@
+import { CheckCircle2 } from 'lucide-react'
 import { formatTime } from '../../lib/time.js'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -35,18 +36,28 @@ export default function TimetableGrid({ entries, onMarkComplete, onOpenMaterial 
                   <button
                     type="button"
                     onClick={() => onMarkComplete?.(session)}
-                    className={`w-full rounded-lg border border-sf-border bg-white px-3.5 py-3 text-left text-[14px] leading-snug text-sf-text-primary transition-opacity ${session.isCompleted ? 'opacity-40' : ''}`}
+                    className={`w-full rounded-lg border border-sf-border bg-white px-3.5 py-3 text-left text-[14px] leading-snug text-sf-text-primary ${session.isCompleted ? 'bg-sf-surface' : ''}`}
+                    aria-pressed={session.isCompleted}
                   >
-                    <span className="mb-1 flex items-center gap-2">
+                    <span className={`mb-1 flex items-center gap-2 ${session.isCompleted ? 'opacity-50' : ''}`}>
                       <span
                         className="h-2 w-2 shrink-0 rounded-full"
                         style={{ backgroundColor: hex }}
                       />
-                      <span className="truncate font-semibold">{session.courseName}</span>
+                      <span className={`truncate font-semibold ${session.isCompleted ? 'line-through' : ''}`}>
+                        {session.courseName}
+                      </span>
                     </span>
-                    <p className="text-[13px] text-sf-text-secondary">
-                      {formatTime(session.startTime)} – {formatTime(session.endTime)}
-                    </p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className={`text-[13px] text-sf-text-secondary ${session.isCompleted ? 'opacity-50' : ''}`}>
+                        {formatTime(session.startTime)} – {formatTime(session.endTime)}
+                      </p>
+                      {session.isCompleted && (
+                        <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-sf-success">
+                          <CheckCircle2 size={14} /> Completed
+                        </span>
+                      )}
+                    </div>
                   </button>
                 )
                 if (!session.materialPath) return <div key={session.id}>{card}</div>

@@ -33,6 +33,7 @@ export default function Timetable() {
   const [generating, setGenerating] = useState(false)
   const [message, setMessage] = useState('')
   const [warning, setWarning] = useState('')
+  const [info, setInfo] = useState('')
   const [showToast, setShowToast] = useState(false)
 
   // One legend chip per course that appears in the timetable.
@@ -41,6 +42,7 @@ export default function Timetable() {
   async function handleGenerate() {
     setMessage('')
     setWarning('')
+    setInfo('')
     if (courses.length === 0 && slots.length === 0) {
       setMessage('Add your courses and weekly availability first, then generate your timetable.')
       return
@@ -63,6 +65,15 @@ export default function Timetable() {
       })
       if (generated.length === 0) {
         setMessage('Your availability slots are shorter than one 90-minute session. Add longer slots to generate a timetable.')
+        return
+      }
+      const signature = (list) =>
+        list
+          .map((e) => `${e.courseId}|${e.dayOfWeek}|${e.startTime}|${e.endTime}`)
+          .sort()
+          .join(';')
+      if (entries.length > 0 && signature(generated) === signature(entries)) {
+        setInfo('Your timetable is already up to date with your courses and availability.')
         return
       }
       const saved = await saveTimetable(generated)
@@ -123,6 +134,10 @@ export default function Timetable() {
         </p>
       )}
 
+      {info && (
+        <p className="mb-4 rounded-lg bg-sf-success-bg px-3.5 py-3 text-[14px] text-sf-success">{info}</p>
+      )}
+
       <ReminderControl />
 
       {(message || error) && (
@@ -155,7 +170,7 @@ export default function Timetable() {
           />
 
           <p className="mt-4 text-center text-[12px] text-sf-text-muted">
-            Tap a session to mark it complete
+            Tap a session to mark it complete. Tap it again to undo.
           </p>
         </>
       )}
