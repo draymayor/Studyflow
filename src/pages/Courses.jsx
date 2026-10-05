@@ -12,26 +12,44 @@ import CourseCard from '../components/domain/CourseCard.jsx'
 import { useCourses } from '../hooks/useCourses.js'
 
 export default function Courses() {
-  const { courses, loading, error, addCourse, deleteCourse } = useCourses()
+  const { courses, loading, error, addCourse, updateCourse, deleteCourse } = useCourses()
   const [isModalOpen, setModalOpen] = useState(false)
-  const [showToast, setShowToast] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [toastMessage, setToastMessage] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState({ courseName: '', courseCode: '', creditHours: '3' })
 
-  async function handleAddCourse(e) {
+  function openAddModal() {
+    setEditingId(null)
+    setForm({ courseName: '', courseCode: '', creditHours: '3' })
+    setModalOpen(true)
+  }
+
+  function openEditModal(course) {
+    setEditingId(course.id)
+    setForm({
+      courseName: course.courseName,
+      courseCode: course.courseCode,
+      creditHours: String(course.creditHours),
+    })
+    setModalOpen(true)
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
     setSubmitting(true)
-    const ok = await addCourse({
+    const values = {
       courseName: form.courseName.trim(),
       courseCode: form.courseCode.trim(),
       creditHours: Number(form.creditHours),
-    })
+    }
+    const ok = editingId ? await updateCourse(editingId, values) : await addCourse(values)
     setSubmitting(false)
     if (!ok) return
-    setForm({ courseName: '', courseCode: '', creditHours: '3' })
     setModalOpen(false)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 2200)
+    setToastMessage(editingId ? 'Course updated' : 'Course added')
+    setEditingId(null)
+    setTimeout(() => setToastMessage(''), 2200)
   }
 
   function handleDelete(course) {
@@ -40,13 +58,13 @@ export default function Courses() {
 
   return (
     <DashboardShell>
-      <Toast show={showToast} message="Course added" />
+      <Toast show={Boolean(toastMessage)} message={toastMessage} />
 
       <PageHeader
         title="My Courses"
         subtitle={loading ? 'Loading your courses…' : `${courses.length} course${courses.length === 1 ? '' : 's'} added`}
         action={
-          <Button onClick={() => setModalOpen(true)}>
+          <Button onClick={openAddModal}>
             <Plus size={16} /> Add Course
           </Button>
         }
@@ -63,13 +81,13 @@ export default function Courses() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((course) => (
-            <CourseCard key={course.id} course={course} onDelete={handleDelete} />
+            <CourseCard key={course.id} course={course} onEdit={openEditModal} onDelete={handleDelete} />
           ))}
         </div>
       )}
 
-      <Modal open={isModalOpen} onClose={() => setModalOpen(false)} title="Add a course">
-        <form onSubmit={handleAddCourse} className="flex flex-col gap-4">
+      <Modal open={isModalOpen} onClose={() => setModalOpen(false)} title={editingId ? 'Edit course' : 'Add a course'}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
             id="courseName"
             label="Course name"
@@ -99,7 +117,7 @@ export default function Courses() {
             ))}
           </Select>
           <Button type="submit" fullWidth className="mt-1" disabled={submitting}>
-            {submitting ? 'Saving…' : 'Save course'}
+            {submitting ? 'Saving…' : editingId ? 'Save changes' : 'Save course'}
           </Button>
         </form>
       </Modal>
